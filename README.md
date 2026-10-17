@@ -2,35 +2,95 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+This application is just for testing excel management, creating a dashboard using excels, parsing data, creating tables and from that
+creating pie charts and cards with information.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Technology Stack used for this testing application
+* SheetJs
+* Tanstack Table
+* Shadcn
+* Postgress
+* Prisma
+* Docker
+
+## Configuration
+Because this project is just for testing purposes i will put all the dependencies installations on this configuration section, obviously
+if you are just cloning this repo just need to do npm install, but this is just a template for a future project.
+
+First need to install the multiple dependencies that i will need
+
+# Tanstack Table
+
+Tanstack Table dependencie and devtools
+``` bash
+npm i @tanstack/react-table
+npm install @tanstack/react-devtools @tanstack/react-table-devtools
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Create table provider and use it on the main layout.tsx
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+``` typescript
+'use client'
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+import { TanStackDevtools } from '@tanstack/react-devtools'
+import { useCreateAtom } from '@tanstack/react-store'
+import { tableDevtoolsPlugin } from '@tanstack/react-table-devtools'
 
-## Learn More
+export default function TableProvider({ children }: { children: React.ReactNode }) {
 
-To learn more about Next.js, take a look at the following resources:
+  return (
+    <>
+      {children}
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+      <TanStackDevtools
+        plugins={[tableDevtoolsPlugin()]}
+      />
+    </>
+  )
+}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# SheetJs
 
-## Deploy on Vercel
+just install the two dependencies
+``` bash
+npm rm --save xlsx
+npm i --save https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Prisma
+Dependencies and initialization for creating the prisma schema, prisma config and .env
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Command to install prisma and create the contract, env, db and prisma.config files
+``` bash
+npx prisma@latest orm init --yes --target postgres --authoring psl --write-env
+```
+
+Modify the .env file with the postgress url
+```
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
+```
+
+Create your tables on contract.prisma because we are using primsa v8 and from there just run the following commands
+
+[!IMPORTANT] 
+Make sure to have your db running on the corresponding port when running the second command, first command just set the table on the contract.json
+
+``` bash
+npx prisma contract emit
+npx prisma db init          
+```
+
+When making changes inside the contact
+``` bash
+npx prisma contract emit
+npx prisma migration plan --name nombre_del_cambio
+npx prisma db migrate --advance-ref db
+```
+
+## Executing the app
+
+1. Turn on your database server
+```
+docker compose up -d
+```

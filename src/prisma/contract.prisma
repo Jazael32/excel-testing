@@ -1,0 +1,9 @@
+// use prisma-8
+model Dataset {
+  id        Int                  @id @default(autoincrement())
+  name      String
+  columns   Jsonb
+  rows      Jsonb
+  createdAt DateTime             @default(now())
+  updatedAt temporal.updatedAt()
+}

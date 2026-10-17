@@ -1,0 +1,12 @@
+services:
+  excelsDB:
+    image: postgres:17
+    container_name: excels-db
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
