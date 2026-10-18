@@ -1,6 +1,6 @@
 // use prisma-8
 model Dataset {
-  id        Int                  @id @default(autoincrement())
+  id        Uuid                 @id @default(uuid())
   name      String
   columns   Jsonb
   rows      Jsonb

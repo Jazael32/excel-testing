@@ -5,14 +5,15 @@ import { notFound } from 'next/navigation';
 import { getDataset } from '@/app/actions/datasets';
 import { ExcelDataGrid } from '@/app/components/tables/ExcelDataGrid'; // ajusta la ruta a la tuya
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function DatasetContent({ params }: { params: Promise<{ id: string }> }) {
   await connection(); // marca este componente como "por petición"
 
   const { id } = await params;
-  const numericId = Number(id);
-  if (Number.isNaN(numericId)) notFound();
+  if (!UUID_REGEX.test(id)) notFound();
 
-  const dataset = await getDataset(numericId);
+  const dataset = await getDataset(id);
   if (!dataset) notFound();
 
   return (

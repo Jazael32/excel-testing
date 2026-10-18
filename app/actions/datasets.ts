@@ -12,11 +12,10 @@ export async function saveDataset(
   return { id: created.id };
 }
 
-export async function getDataset(id: number) {
+export async function getDataset(id: string) {
   const dataset = await Dataset.where({ id }).first();
-  if (!dataset) return null; // null si no existe
+  if (!dataset) return null;
 
-  // Objeto plano: sin Temporal, con las fechas convertidas a número
   return {
     id: dataset.id,
     name: dataset.name,
@@ -27,11 +26,11 @@ export async function getDataset(id: number) {
   };
 }
 
-export async function updateRows(id: number, rows: Record<string, unknown>[]) {
+export async function updateRows(id: string, rows: Record<string, unknown>[]) {
   await Dataset.where({ id }).update({ rows });
 }
 
-export async function deleteDataset(id: number) {
+export async function deleteDataset(id: string) {
   await Dataset.where({ id }).delete();
 }
 
