@@ -58,42 +58,43 @@ export async function parseExcelAdvanced(
   }
 
   // 3. Extract and clean headers
-  const headers = rawRows[headerRowIndex]
-    .map(cell => String(cell).trim())
-    .filter(Boolean);
+  const headerCols = rawRows[headerRowIndex]
+    .map((cell, index) => ({ name: String(cell).trim(), index }))
+    .filter((col) => col.name);
 
-  // Find the index of the column you want to monitor (if specified)
-  const stopColumnIndex = stopOnEmptyColumn ? headers.indexOf(stopOnEmptyColumn) : -1;
+  const headers = headerCols.map((col) => col.name);
+
+  const stopColumnIndex = stopOnEmptyColumn
+    ? (headerCols.find((col) => col.name === stopOnEmptyColumn)?.index ?? -1)
+    : -1;
 
   // 4. Slice all rows below the header row
   const dataRows = rawRows.slice(headerRowIndex + 1);
   const data: Record<string, any>[] = [];
 
-  // 5. Map rows and apply the "stop on empty column" rule
+  // 5. Map row cells using the original index
   for (const row of dataRows) {
-    // If a stop column was provided, check if its value is empty/null/undefined
     if (stopColumnIndex !== -1) {
       const cellValue = row[stopColumnIndex];
-      // If the cell is empty, blank string, or undefined, STOP completely
       if (cellValue === undefined || cellValue === null || String(cellValue).trim() === '') {
         break;
       }
     }
 
-    // Skip entirely blank rows if no stop column triggered yet
-    if (row.every(cell => cell === '' || cell == null)) {
+    // Skip entirely blank rows
+    if (row.every((cell) => cell === '' || cell == null)) {
       continue;
     }
 
-    // Map row cells to header keys
+    // Map row cells using the original index
     const obj: Record<string, any> = {};
-    headers.forEach((header, index) => {
-      obj[header] = row[index] !== undefined ? row[index] : '';
-    });
+    for (const { name, index } of headerCols) {
+      const value = row[index];
+      obj[name] = value instanceof Date ? value.toISOString() : (value ?? '');
+    }
 
     data.push(obj);
   }
-
   console.log(data);
 
   return {

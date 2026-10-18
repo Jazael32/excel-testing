@@ -13,7 +13,18 @@ export async function saveDataset(
 }
 
 export async function getDataset(id: number) {
-  return Dataset.where({ id }).first(); // null si no existe
+  const dataset = await Dataset.where({ id }).first();
+  if (!dataset) return null; // null si no existe
+
+  // Objeto plano: sin Temporal, con las fechas convertidas a número
+  return {
+    id: dataset.id,
+    name: dataset.name,
+    columns: dataset.columns as string[],
+    rows: dataset.rows as Record<string, unknown>[],
+    createdAt: dataset.createdAt.epochMilliseconds,
+    updatedAt: dataset.updatedAt.epochMilliseconds,
+  };
 }
 
 export async function updateRows(id: number, rows: Record<string, unknown>[]) {

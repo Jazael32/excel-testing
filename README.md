@@ -66,6 +66,17 @@ Command to install prisma and create the contract, env, db and prisma.config fil
 npx prisma@latest orm init --yes --target postgres --authoring psl --write-env
 ```
 
+If using a node version below 26, edit db.ts with the following lines after running this command.
+``` bash
+npm i temporal-polyfill
+```
+
+``` typescript
+import "temporal-polyfill/full/global";
+import "dotenv/config";
+import postgres from "@prisma/orm-postgres/runtime";
+```
+
 Modify the .env file with the postgress url
 ```
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
@@ -73,8 +84,9 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
 
 Create your tables on contract.prisma because we are using primsa v8 and from there just run the following commands
 
-[!IMPORTANT] 
-Make sure to have your db running on the corresponding port when running the second command, first command just set the table on the contract.json
+> [!WARNING]
+> Make sure to have your db running on the corresponding port when running the second command, first command just set the table on the contract.json
+
 
 ``` bash
 npx prisma contract emit
