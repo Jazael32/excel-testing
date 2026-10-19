@@ -26,6 +26,7 @@ export async function getDataset(id: string) {
   };
 }
 
+
 export async function updateRows(id: string, rows: Record<string, unknown>[]) {
   await Dataset.where({ id }).update({ rows });
 }

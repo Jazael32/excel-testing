@@ -16,6 +16,7 @@ import {
 } from '@tanstack/react-table'
 import { useCreateAtom } from '@tanstack/react-store'
 import * as XLSX from 'xlsx'
+import { EditableCell } from './EditableCell'
 
 // 2. Add globalFilteringFeature and filteredRowModel to the static config
 const tableFeaturesConfig = tableFeatures({
@@ -31,9 +32,11 @@ const tableFeaturesConfig = tableFeatures({
 interface ExcelDataGridProps {
   headers: string[]
   data: Record<string, any>[]
+  onCellEdit?: (rowIndex: number, columnId: string, value: unknown) => void
+  onDeleteRows?: (rowIndexes: number[]) => void
 }
 
-export function ExcelDataGrid({ headers, data }: ExcelDataGridProps) {
+export function ExcelDataGrid({ headers, data, onCellEdit, onDeleteRows }: ExcelDataGridProps) {
   const [globalFilter, setGlobalFilter] = useState('')
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({})
 
@@ -47,17 +50,15 @@ export function ExcelDataGrid({ headers, data }: ExcelDataGridProps) {
       accessorFn: (row) => row[header],
       id: header,
       header: header,
-      cell: ({ getValue }) => {
-        const value = getValue()
-        const stringVal = value !== null && value !== undefined ? String(value) : ''
-
-        if (!stringVal) {
-          return <span className="text-slate-600 italic">empty</span>
-        }
-        return <span className="text-slate-300">{stringVal}</span>
-      },
+      cell: ({ getValue, row }) => (
+        <EditableCell
+          value={getValue()}
+          readOnly={!onCellEdit}
+          onCommit={(value) => onCellEdit?.(row.index, header, value)}
+        />
+      ),
     }))
-  }, [headers])
+  }, [headers, onCellEdit]);
 
   // 3. Pass globalFilter state and handlers directly into useTable config
   const table = useTable({
@@ -76,6 +77,33 @@ export function ExcelDataGrid({ headers, data }: ExcelDataGridProps) {
   const paginationState = table.atoms.pagination.get()
   const rowModel = table.getRowModel()
   const selectedCount = Object.values(selectedRows).filter(Boolean).length
+
+  // Selected rows are keyed by TanStack's default row id, which is the index in `data`
+  const handleDeleteSelected = () => {
+    const indexes = Object.keys(selectedRows)
+      .filter((id) => selectedRows[id])
+      .map(Number)
+    if (indexes.length === 0) return
+    if (!confirm(`Delete ${indexes.length} selected row(s)?`)) return
+
+    onDeleteRows?.(indexes)
+    setSelectedRows({}) // indexes shift after deleting, so clear the selection
+  }
+
+  const pageRows = rowModel.rows
+  const allPageSelected =
+    pageRows.length > 0 && pageRows.every((r) => selectedRows[r.id])
+
+  const toggleAllPage = (checked: boolean) => {
+    setSelectedRows((prev) => {
+      const next = { ...prev }
+      pageRows.forEach((r) => {
+        if (checked) next[r.id] = true
+        else delete next[r.id]
+      })
+      return next
+    })
+  }
 
   const handleExportToExcel = () => {
     if (data.length === 0) return
@@ -118,6 +146,16 @@ export function ExcelDataGrid({ headers, data }: ExcelDataGridProps) {
         </div>
       </div>
 
+      {onDeleteRows && (
+        <button
+          onClick={handleDeleteSelected}
+          disabled={selectedCount === 0}
+          className="px-4 py-2 rounded-lg text-xs font-bold tracking-wider bg-[#1a1d24] text-red-400 hover:bg-[#222630] border border-red-500/30 transition-all shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          🗑 Delete selected ({selectedCount})
+        </button>
+      )}
+
       {/* Sub-header Controls & Row Counter */}
       <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
         <div className="flex items-center gap-2">
@@ -138,7 +176,13 @@ export function ExcelDataGrid({ headers, data }: ExcelDataGridProps) {
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 <th className="w-12 px-4 py-3.5">
-                  <span className="sr-only">Select All</span>
+                  <input
+                    type="checkbox"
+                    checked={allPageSelected}
+                    onChange={(e) => toggleAllPage(e.target.checked)}
+                    className="rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                    aria-label="Select all rows on this page"
+                  />
                 </th>
                 {headerGroup.headers.map((header) => (
                   <th
